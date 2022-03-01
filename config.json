@@ -1,0 +1,37 @@
+{
+    "tags": [
+        {
+            "name": "Random/Text"
+        },
+        {
+            "name": "Random/Date"
+        },
+        {
+            "name": "Random/Boolean"
+        },
+        {
+            "name": "Random/Int1"
+        },
+        {
+            "name": "Random/UInt1"
+        },
+        {
+            "name": "Random/Int2"
+        },
+        {
+            "name": "Random/UInt2"
+        },
+        {
+            "name": "Random/Int4"
+        },
+        {
+            "name": "Random/UInt4"
+        },
+        {
+            "name": "Random/Real4"
+        },
+        {
+            "name": "Random/Real8"
+        }
+    ]
+}
