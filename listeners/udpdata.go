@@ -7,11 +7,8 @@ import (
 
 	"github.com/cyops-se/dd-proxy/db"
 	"github.com/cyops-se/dd-proxy/engine"
-	"github.com/cyops-se/dd-proxy/types"
 	"github.com/nats-io/nats.go"
 )
-
-var prevMsg *types.DataMessage
 
 type UDPDataListener struct {
 	Port int `json:"port"`

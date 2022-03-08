@@ -74,9 +74,9 @@
 
     created () {
       var t = this
-      WebsocketService.topic('data', function (topic, message) {
-        // t.topic = topic
-        // t.msg += message
+      WebsocketService.topic('file', function (topic, message) {
+        t.topic = topic
+        t.msg += new Date().toString()
       })
     },
   }

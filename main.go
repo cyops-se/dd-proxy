@@ -15,16 +15,11 @@ import (
 	"github.com/cyops-se/dd-proxy/db"
 	"github.com/cyops-se/dd-proxy/listeners"
 	"github.com/cyops-se/dd-proxy/routes"
+	"github.com/cyops-se/dd-proxy/types"
 	"golang.org/x/sys/windows/svc"
 )
 
-type Context struct {
-	cmd     string
-	trace   bool
-	version bool
-}
-
-var ctx Context
+var ctx types.Context
 var GitVersion string
 var GitCommit string
 
@@ -32,27 +27,35 @@ func main() {
 	defer handlePanic()
 	svcName := "dd-proxy"
 
-	flag.StringVar(&ctx.cmd, "cmd", "debug", "Windows service command (try 'usage' for more info)")
-	flag.BoolVar(&ctx.trace, "trace", false, "Prints traces of OCP data to the console")
-	flag.BoolVar(&ctx.version, "v", false, "Prints the commit hash and exists")
+	flag.StringVar(&ctx.Cmd, "cmd", "debug", "Windows service command (try 'usage' for more info)")
+	flag.StringVar(&ctx.Wdir, "workdir", ".", "Sets the working directory for the process")
+	flag.BoolVar(&ctx.Trace, "trace", false, "Prints traces of OCP data to the console")
+	flag.BoolVar(&ctx.Version, "v", false, "Prints the commit hash and exists")
 	flag.Parse()
 
 	routes.SysInfo.GitVersion = GitVersion
 	routes.SysInfo.GitCommit = GitCommit
 
-	if ctx.version {
+	if ctx.Version {
 		fmt.Printf("dd-proxy version %s, commit: %s\n", routes.SysInfo.GitVersion, routes.SysInfo.GitCommit)
 		return
 	}
 
-	if ctx.cmd == "install" {
+	if _, err := os.Stat(ctx.Wdir); os.IsNotExist(err) {
+		if err = os.MkdirAll(ctx.Wdir, os.ModePerm); err != nil {
+			fmt.Printf("dd-proxy, failed to create working directory: %s, error: %s\n", ctx.Wdir, err.Error())
+			return
+		}
+	}
+
+	if ctx.Cmd == "install" {
 		if err := installService(svcName, "dd-proxy from cyops-se"); err != nil {
-			log.Fatalf("failed to %s %s: %v", ctx.cmd, svcName, err)
+			log.Fatalf("failed to %s %s: %v", ctx.Cmd, svcName, err)
 		}
 		return
-	} else if ctx.cmd == "remove" {
+	} else if ctx.Cmd == "remove" {
 		if err := removeService(svcName); err != nil {
-			log.Fatalf("failed to %s %s: %v", ctx.cmd, svcName, err)
+			log.Fatalf("failed to %s %s: %v", ctx.Cmd, svcName, err)
 		}
 		return
 	}
@@ -72,11 +75,12 @@ func main() {
 func runEngine() {
 	defer handlePanic()
 
-	db.ConnectDatabase()
+	db.ConnectDatabase(ctx)
 	db.InitContent()
 
 	listeners.RegisterType(&listeners.UDPDataListener{})
 	listeners.RegisterType(&listeners.UDPMetaListener{})
+	listeners.RegisterType(&listeners.UDPFileListener{})
 	listeners.Init()
 
 	go RunWeb()
