@@ -16,7 +16,6 @@ import (
 	"github.com/cyops-se/dd-proxy/listeners"
 	"github.com/cyops-se/dd-proxy/routes"
 	"github.com/cyops-se/dd-proxy/types"
-	"golang.org/x/sys/windows/svc"
 )
 
 var ctx types.Context
@@ -24,8 +23,6 @@ var GitVersion string
 var GitCommit string
 
 func main() {
-	defer handlePanic()
-	svcName := "dd-proxy"
 
 	flag.StringVar(&ctx.Cmd, "cmd", "debug", "Windows service command (try 'usage' for more info)")
 	flag.StringVar(&ctx.Wdir, "workdir", ".", "Sets the working directory for the process")
@@ -48,32 +45,10 @@ func main() {
 		}
 	}
 
-	if ctx.Cmd == "install" {
-		if err := installService(svcName, "dd-proxy from cyops-se"); err != nil {
-			log.Fatalf("failed to %s %s: %v", ctx.Cmd, svcName, err)
-		}
-		return
-	} else if ctx.Cmd == "remove" {
-		if err := removeService(svcName); err != nil {
-			log.Fatalf("failed to %s %s: %v", ctx.Cmd, svcName, err)
-		}
-		return
-	}
-
-	inService, err := svc.IsWindowsService()
-	if err != nil {
-		log.Fatalf("failed to determine if we are running in an interactive session: %v", err)
-	}
-	if inService {
-		runService(svcName, false)
-		return
-	}
-
-	runService(svcName, true)
+	runEngine()
 }
 
 func runEngine() {
-	defer handlePanic()
 
 	db.ConnectDatabase(ctx)
 	db.InitContent()
